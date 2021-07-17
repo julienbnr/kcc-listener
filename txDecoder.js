@@ -46,8 +46,8 @@ const getReadableMessageFromPairCreatedEvent = async (event, provider, routerNam
 
     const pairMessage = `New pair ${symbolToken0}/${symbolToken1} was created from the router ${routerName} !`;
 
-    const messageToken0 = getTokenMessage(' Token 0 ', nameToken0, symbolToken0, supplyToken0);
-    const messageToken1 = getTokenMessage(' Token 1 ', nameToken1, symbolToken1, supplyToken1);
+    const messageToken0 = getTokenMessage(' Token 0 ', tokenAddress0, nameToken0, symbolToken0, supplyToken0);
+    const messageToken1 = getTokenMessage(' Token 1 ', tokenAddress1, nameToken1, symbolToken1, supplyToken1);
 
     return `${pairMessage}\n${messageToken0}\n${messageToken1}\n`;
   } catch (error) {
@@ -56,8 +56,9 @@ const getReadableMessageFromPairCreatedEvent = async (event, provider, routerNam
   }
 };
 
-const getTokenMessage = (label, name, symbol, supply) => {
-  return `--${label}--\nName: ${name}\nSymbol: ${symbol}\nSupply: ${supply}`;
+const getTokenMessage = (label, address, name, symbol, supply) => {
+  const supplyEther = ethers.utils.formatEther(supply);
+  return `--${label}--\nName: ${name}\nAddress: ${address}\nSymbol: ${symbol}\n`;
 };
 
 exports.decode = decode;
