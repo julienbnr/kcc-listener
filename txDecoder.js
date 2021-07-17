@@ -57,7 +57,7 @@ const getReadableMessageFromPairCreatedEvent = async (event, provider, routerNam
 };
 
 const getTokenMessage = (label, address, name, symbol, supply) => {
-  const supplyEther = ethers.utils.formatEther(supply);
+  //const supplyEther = ethers.utils.formatEther(supply);
   return `--${label}--\nName: ${name}\nAddress: ${address}\nSymbol: ${symbol}\n`;
 };
 
