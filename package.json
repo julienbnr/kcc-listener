@@ -1,0 +1,25 @@
+{
+  "name": "kcc-listener",
+  "version": "1.0.0",
+  "description": "",
+  "main": "kcc-listener.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/julienbnr/kcc-listener.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/julienbnr/kcc-listener/issues"
+  },
+  "homepage": "https://github.com/julienbnr/kcc-listener#readme",
+  "dependencies": {
+    "abi-decoder": "^2.4.0",
+    "discord-webhook-node": "^1.1.8",
+    "ethers": "^5.4.1",
+    "pm2": "^5.1.0"
+  }
+}
