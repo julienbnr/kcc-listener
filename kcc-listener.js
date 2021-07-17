@@ -17,6 +17,7 @@ const KCC_ROUTER_ADDRESSES = [
   '0xA58350d6dEE8441aa42754346860E3545cc83cdA'.toLowerCase()
 ];
 
+const ALL_ROUTER_NAMES = KCC_ROUTERS.map(router => router.name).join('/');
 const addLiquidityRegex = new RegExp("^0xe8e33700");
 const addLiquidityKCSRegex = new RegExp("^0xd71a1bc5");
 const addLiquidityETHRegex = new RegExp("^0xf305d719");
@@ -29,7 +30,7 @@ const startConnection = () => {
   let pingTimeout = null;
   let keepAliveInterval = null;
   provider._websocket.on("open", () => {
-    console.log(`Spy KoffeeSwap Router !`);
+    console.log(`Spying ${ALL_ROUTER_NAMES} Routers for new PairCreated events when adding liquidity !`);
     keepAliveInterval = setInterval(() => {
       provider._websocket.ping();
       // Use `WebSocket#terminate()`, which immediately destroys the connection,
@@ -48,7 +49,8 @@ const startConnection = () => {
 
             const liqProvidedInETH = addLiquidityKCSRegex.test(tx.data) || addLiquidityETHRegex.test(tx.data);
             if (addLiquidityRegex.test(tx.data) || liqProvidedInETH) {
-              console.log(`A new ${liqProvidedInETH ? 'addLiquidityKCS' : 'addLiquidity'} transaction was detected ${txHash} !`);
+              const routerName = KCC_ROUTERS.filter(router => router.address.toLowerCase() === tx.to.toLowerCase())[0].name;
+              console.log(`A new ${liqProvidedInETH ? 'addLiquidityKCS' : 'addLiquidity'} transaction was detected from the router ${routerName} ! Tx Hash: ${txHash} !`);
 
               try {
                 const receipt = await tx.wait();
@@ -56,7 +58,6 @@ const startConnection = () => {
 
                 if (pairCreatedEvt) {
                   console.log(`A new pair was created from the router on transaction ${txHash} !`);
-                  const routerName = KCC_ROUTERS.filter(router => router.address === tx.to.toLowerCase())[0].name;
                   const pairEvtMessage = await txDecoder.getReadableMessageFromPairCreatedEvent(pairCreatedEvt, provider, routerName);
                   const msg = `Tx Hash: ${txHash}\n${pairEvtMessage}`;
                   console.log(msg);
