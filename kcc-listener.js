@@ -1,17 +1,25 @@
 const ethers = require('ethers');
 const provider = new ethers.providers.WebSocketProvider('wss://rpc-ws-mainnet.kcc.network');
 
-const KCS_ROUTER = '0xc0ffee0000c824d24e0f280f1e4d21152625742b';
-const KCS_FACTORY = '0xc0ffee00000e1439651c6ad025ea2a71ed7f3eab';
+const KCC_ROUTERS = [
+  {
+    name: 'KoffeeSwap',
+    address: '0xc0ffee0000c824d24e0f280f1e4d21152625742b'
+  },
+  {
+    name: 'KuSwap',
+    address: '0xA58350d6dEE8441aa42754346860E3545cc83cdA'
+  }
+];
 
-const ROUTER_ABI = require('./json/routerABI.json');
-const FACTORY_ABI = require('./json/factoryABI.json');
-
-const router = new ethers.Contract(KCS_ROUTER, ROUTER_ABI, provider);
-const factory = new ethers.Contract(KCS_FACTORY, FACTORY_ABI, provider);
+const KCC_ROUTER_ADDRESSES = [
+  '0xc0ffee0000c824d24e0f280f1e4d21152625742b'.toLowerCase(),
+  '0xA58350d6dEE8441aa42754346860E3545cc83cdA'.toLowerCase()
+];
 
 const addLiquidityRegex = new RegExp("^0xe8e33700");
 const addLiquidityKCSRegex = new RegExp("^0xd71a1bc5");
+const addLiquidityETHRegex = new RegExp("^0xf305d719");
 
 const webhook = require('./webhook');
 
@@ -36,27 +44,29 @@ const startConnection = () => {
     provider.on("pending", async (txHash) => {
       provider.getTransaction(txHash).then(async (tx) => {
         if (tx && tx.to) {
-          if (tx.to.toLowerCase() === KCS_ROUTER.toLowerCase()) {
+          if (KCC_ROUTER_ADDRESSES.includes(tx.to.toLowerCase())) {
 
-            const liqProvidedInETH = addLiquidityKCSRegex.test(tx.data);
+            const liqProvidedInETH = addLiquidityKCSRegex.test(tx.data) || addLiquidityETHRegex.test(tx.data);
             if (addLiquidityRegex.test(tx.data) || liqProvidedInETH) {
               console.log(`A new ${liqProvidedInETH ? 'addLiquidityKCS' : 'addLiquidity'} transaction was detected ${txHash} !`);
 
-              // Handle Tx Fail !
-              const receipt = await tx.wait();
-              const pairCreatedEvt = txDecoder.getPairCreatedEventOrUndefined(receipt);
+              try {
+                const receipt = await tx.wait();
+                const pairCreatedEvt = txDecoder.getPairCreatedEventOrUndefined(receipt);
 
-              if (pairCreatedEvt) {
-                console.log(`A new pair was created from the router on transaction ${txHash} !`);
-                const pairEvtMessage = await txDecoder.getReadableMessageFromPairCreatedEvent(pairCreatedEvt, provider);
-                const msg = `Tx Hash: ${txHash}\n${pairEvtMessage}`;
-                console.log(msg);
-                await webhook.sendWebhook(msg);
-              } else {
-                console.log(`No new pair created from the router on transaction ${txHash} !`);
+                if (pairCreatedEvt) {
+                  console.log(`A new pair was created from the router on transaction ${txHash} !`);
+                  const routerName = KCC_ROUTERS.filter(router => router.address === tx.to.toLowerCase())[0].name;
+                  const pairEvtMessage = await txDecoder.getReadableMessageFromPairCreatedEvent(pairCreatedEvt, provider, routerName);
+                  const msg = `Tx Hash: ${txHash}\n${pairEvtMessage}`;
+                  console.log(msg);
+                  await webhook.sendWebhook(msg);
+                } else {
+                  console.log(`No new pair created from the router on transaction ${txHash} !`);
+                }
+              } catch (error) {
+                console.log(`Transaction ${txHash} has failed !`);
               }
-
-              // console.log(`An error occurred on the transaction ${txHash}`)
             }
           }
         }
@@ -72,7 +82,7 @@ const startConnection = () => {
   });
 
   provider._websocket.on("error", () => {
-    console.log("Error. Attemptiing to Reconnect...");
+    console.log("Error. Attempting to Reconnect...");
     clearInterval(keepAliveInterval);
     clearTimeout(pingTimeout);
     startConnection();

@@ -26,7 +26,7 @@ const getPairCreatedEventOrUndefined = (receipt) => {
  * @param provider the provider
  * @returns {Promise<string>}
  */
-const getReadableMessageFromPairCreatedEvent = async (event, provider) => {
+const getReadableMessageFromPairCreatedEvent = async (event, provider, routerName) => {
   const tokenAddress0 = event.events[0].value;
   const tokenAddress1 = event.events[1].value;
 
@@ -44,7 +44,7 @@ const getReadableMessageFromPairCreatedEvent = async (event, provider) => {
     const symbolToken1 = await contractToken1.symbol();
     const supplyToken1 = await contractToken1.totalSupply();
 
-    const pairMessage = `New pair ${symbolToken0}/${symbolToken1} was created from the router !`;
+    const pairMessage = `New pair ${symbolToken0}/${symbolToken1} was created from the router ${routerName} !`;
 
     const messageToken0 = getTokenMessage(' Token 0 ', nameToken0, symbolToken0, supplyToken0);
     const messageToken1 = getTokenMessage(' Token 1 ', nameToken1, symbolToken1, supplyToken1);
